@@ -1,0 +1,22 @@
+{
+  "android": {
+    "versionCode": 9,
+    "versionName": "0.2.4",
+    "publishedAt": "2026-10-08",
+    "sha256": "87A653B1B2C648A936D3CC04FB6407852BEFB9A699AF2898BC1BDDFEF6638BBB",
+    "sizeBytes": 28653515,
+    "url": "FitnessAgent.enc",
+    "fileName": "FitnessAgent-v0.2.4.apk",
+    "mime": "application/vnd.android.package-archive"
+  },
+  "pc": {
+    "versionCode": 1,
+    "versionName": "0.2.4",
+    "publishedAt": "2026-10-08",
+    "sha256": "167BF41D7ADBC4ED7F451742364729B0E50C18B673ACADC8B752EE44575CA0D6",
+    "sizeBytes": 25243308,
+    "url": "FitnessAgent-PC.enc",
+    "fileName": "FitnessAgent-PC.html",
+    "mime": "text/html"
+  }
+}

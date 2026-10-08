@@ -20,22 +20,24 @@
     #status { min-height: 3em; font-weight: 600; }
     .note { color: #46645a; font-size: .94rem; }
     a { color: #075a43; font-weight: 650; }
+    .platform-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;border:0;padding:0;margin:24px 0}.platform-options legend{margin-bottom:10px;font-weight:650}.platform-choice{display:flex;gap:10px;align-items:center;margin:0;padding:14px 10px;border:1px solid #8ca99b;border-radius:10px;cursor:pointer}.platform-choice:has(input:checked){background:#edf7f1;border-color:#146a51}.platform-choice input{width:20px;min-height:20px;margin:0}.platform-choice small{display:block;margin-top:4px;font-weight:400;font-size:12px}.save-file{display:block;text-align:center;padding:14px;border-radius:10px;background:#146a51;color:white;text-decoration:none}.save-file[hidden]{display:none}
   </style>
   <script type="module" src="./app.js"></script>
 </head>
 <body>
   <main>
     <h1>Скачать Фитнес-тренер</h1>
-    <p class="note">Текущая версия: 0.2.3</p>
-    <p>Введите ключ, который вам передал владелец приложения. Браузер подготовит APK для Android — распаковывать архив не нужно.</p>
+    <p class="note">Android и ПК · версия 0.2.4</p>
+    <p>Введите ключ, который вам передал владелец приложения. Выберите Android или ПК. Для обеих версий действует один и тот же ключ; вход в GitHub и архиватор не нужны.</p>
     <form id="download-form">
+      <fieldset class="platform-options"><legend>Для какого устройства скачать?</legend><label class="platform-choice"><input type="radio" name="platform" value="android" checked><span>Для Android<small>Приложение APK</small></span></label><label class="platform-choice"><input type="radio" name="platform" value="pc"><span>Для ПК<small>Файл для Chrome / Edge</small></span></label></fieldset>
       <label for="access-key">Ключ доступа</label>
       <input id="access-key" type="password" autocomplete="off" spellcheck="false" required>
-      <button id="download-button" type="submit">Скачать APK</button>
+      <button id="download-button" type="submit">Подготовить файл</button>
     </form>
     <p id="status" role="status" aria-live="polite"></p>
-    <p><a id="manual-download" hidden>Скачать готовый APK вручную</a></p>
-    <p class="note">Ключ используется только в вашем браузере. Файл размером около 29 МБ; подготовка может занять немного времени. После загрузки откройте APK и следуйте подсказкам Android для установки. При обновлении устанавливайте его поверх прежней версии — личные данные сохранятся.</p>
+    <p><a id="manual-download" class="save-file" hidden>Скачать готовый файл</a></p><p><a id="fallback-download" hidden>Запасная ссылка для скачивания</a></p>
+    <p id="platform-note" class="note"></p><p class="note">Ключ используется только в вашем браузере и подходит для обеих версий. После подготовки нажмите отдельную кнопку скачивания. Сохранение файла может занять немного времени.</p>
     <noscript>Для загрузки включите JavaScript в браузере.</noscript>
   </main>
 </body>
