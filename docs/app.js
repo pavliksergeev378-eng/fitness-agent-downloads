@@ -44,7 +44,15 @@ if (typeof document !== "undefined") {
       if (currentUrl) URL.revokeObjectURL(currentUrl);
       currentUrl = URL.createObjectURL(new Blob([apk], { type: "application/vnd.android.package-archive" }));
       manual.href = currentUrl;
-      manual.download = "FitnessAgent-v0.2.0.apk";
+      let version = "0.2.1";
+      try {
+        const manifestResponse = await fetch("./version.json", { cache: "no-store" });
+        if (manifestResponse.ok) {
+          const manifest = await manifestResponse.json();
+          if (/^[0-9]+(?:\.[0-9]+)*$/.test(String(manifest.versionName))) version = manifest.versionName;
+        }
+      } catch (_) {}
+      manual.download = "FitnessAgent-v" + version + ".apk";
       manual.hidden = false;
       field.value = "";
       status.textContent = "APK готов. Если скачивание не началось, нажмите ссылку ниже.";
