@@ -44,7 +44,7 @@ if (typeof document !== "undefined") {
       if (currentUrl) URL.revokeObjectURL(currentUrl);
       currentUrl = URL.createObjectURL(new Blob([apk], { type: "application/vnd.android.package-archive" }));
       manual.href = currentUrl;
-      let version = "0.2.2";
+      let version = "0.2.3";
       try {
         const manifestResponse = await fetch("./version.json", { cache: "no-store" });
         if (manifestResponse.ok) {
