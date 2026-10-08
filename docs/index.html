@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#145a48">
+  <title>Скачать Фитнес-тренер</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #edf4f0; color: #17352c; }
+    main { box-sizing: border-box; width: min(100% - 32px, 520px); padding: 28px; border-radius: 20px; background: white; box-shadow: 0 12px 40px #164d3820; }
+    h1 { margin: 0 0 12px; font-size: 1.7rem; line-height: 1.2; }
+    p { line-height: 1.5; }
+    label { display: block; margin: 24px 0 8px; font-weight: 650; }
+    input, button { box-sizing: border-box; width: 100%; min-height: 48px; font: inherit; border-radius: 10px; }
+    input { padding: 10px 12px; border: 1px solid #8ca99b; }
+    input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid #5fb891; outline-offset: 2px; }
+    button { margin-top: 12px; border: 0; background: #146a51; color: white; font-weight: 700; cursor: pointer; }
+    button:disabled { opacity: .65; cursor: wait; }
+    #status { min-height: 3em; font-weight: 600; }
+    .note { color: #46645a; font-size: .94rem; }
+    a { color: #075a43; font-weight: 650; }
+  </style>
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <main>
+    <h1>Скачать Фитнес-тренер</h1>
+    <p>Введите ключ, который вам передал владелец приложения. Браузер подготовит APK для Android — распаковывать архив не нужно.</p>
+    <form id="download-form">
+      <label for="access-key">Ключ доступа</label>
+      <input id="access-key" type="password" autocomplete="off" spellcheck="false" required>
+      <button id="download-button" type="submit">Скачать APK</button>
+    </form>
+    <p id="status" role="status" aria-live="polite"></p>
+    <p><a id="manual-download" hidden>Скачать готовый APK вручную</a></p>
+    <p class="note">Ключ используется только в вашем браузере. Файл размером около 29 МБ; подготовка может занять немного времени. После загрузки откройте APK и следуйте подсказкам Android для установки.</p>
+    <noscript>Для загрузки включите JavaScript в браузере.</noscript>
+  </main>
+</body>
+</html>
