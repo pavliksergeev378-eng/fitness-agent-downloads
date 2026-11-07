@@ -26,27 +26,40 @@ async function sha256(data) {
     .map(byte => byte.toString(16).padStart(2, "0")).join("");
 }
 
-// FAD1: header, unchanged prefix, changed middle, unchanged suffix.
+// FAD2: copy matching blocks from the old file and insert changed bytes.
 export async function applyDelta(baseData, patchData) {
   const base = new Uint8Array(baseData);
   const patch = new Uint8Array(patchData);
-  if (patch.length < 100 || String.fromCharCode(...patch.subarray(0, 4)) !== "FAD1") throw Error("invalid_patch");
+  if (patch.length < 88 || String.fromCharCode(...patch.subarray(0, 4)) !== "FAD2") throw Error("invalid_patch");
   const view = new DataView(patch.buffer, patch.byteOffset, patch.byteLength);
   const number = offset => {
     const value = Number(view.getBigUint64(offset, false));
     if (!Number.isSafeInteger(value)) throw Error("invalid_patch");
     return value;
   };
-  const baseSize = number(4), newSize = number(12), prefix = number(20), suffix = number(28);
+  const baseSize = number(4), newSize = number(12), count = view.getUint32(84, false);
   const hex = bytes => [...bytes].map(byte => byte.toString(16).padStart(2, "0")).join("");
-  if (base.length !== baseSize || newSize > 150_000_000 || prefix + suffix > Math.min(baseSize, newSize) ||
-      patch.length !== 100 + newSize - prefix - suffix ||
-      await sha256(base) !== hex(patch.subarray(36, 68))) throw Error("invalid_patch");
+  if (base.length !== baseSize || newSize > 150_000_000 || count > 100_000 ||
+      await sha256(base) !== hex(patch.subarray(20, 52))) throw Error("invalid_patch");
   const result = new Uint8Array(newSize);
-  result.set(base.subarray(0, prefix));
-  result.set(patch.subarray(100), prefix);
-  if (suffix) result.set(base.subarray(baseSize - suffix), newSize - suffix);
-  if (await sha256(result) !== hex(patch.subarray(68, 100))) throw Error("invalid_patch");
+  let position = 88, written = 0;
+  for (let index = 0; index < count; index++) {
+    const kind = patch[position++];
+    let data;
+    if (kind === 0) {
+      const offset = number(position), length = number(position + 8);position += 16;
+      if (offset > baseSize || length > baseSize - offset) throw Error("invalid_patch");
+      data = base.subarray(offset, offset + length);
+    } else if (kind === 1) {
+      const length = number(position);position += 8;
+      if (length > patch.length - position) throw Error("invalid_patch");
+      data = patch.subarray(position, position + length);position += length;
+    } else throw Error("invalid_patch");
+    if (data.length > newSize - written) throw Error("invalid_patch");
+    result.set(data, written);written += data.length;
+  }
+  if (position !== patch.length || written !== newSize ||
+      await sha256(result) !== hex(patch.subarray(52, 84))) throw Error("invalid_patch");
   return result.buffer;
 }
 
