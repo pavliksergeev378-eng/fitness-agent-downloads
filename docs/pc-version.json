@@ -1,7 +1,14 @@
 {
-  "versionCode": 1,
-  "versionName": "0.2.4",
-  "publishedAt": "2026-10-08",
-  "sha256": "167BF41D7ADBC4ED7F451742364729B0E50C18B673ACADC8B752EE44575CA0D6",
-  "sizeBytes": 25243308
+  "versionCode": 2,
+  "versionName": "0.2.5",
+  "publishedAt": "2026-11-07",
+  "sha256": "44017685C38D8D4E8F2F04B00EBD8975DA6B02E3F861B125050C3F4767BC1481",
+  "sizeBytes": 25244596,
+  "patch": {
+    "baseVersionCode": 1,
+    "baseSha256": "167BF41D7ADBC4ED7F451742364729B0E50C18B673ACADC8B752EE44575CA0D6",
+    "sha256": "A0319E2518C2016D5B7BD6E64158B7C73E27A3810A18F38C36F41F9639041A48",
+    "sizeBytes": 58794,
+    "url": "FitnessAgent-PC.patch.enc"
+  }
 }
