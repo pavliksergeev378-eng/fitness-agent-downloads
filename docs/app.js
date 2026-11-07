@@ -21,22 +21,61 @@ export async function decryptPayload(data, password) {
   return globalThis.crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
 }
 
+async function sha256(data) {
+  return [...new Uint8Array(await globalThis.crypto.subtle.digest("SHA-256", data))]
+    .map(byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+// FAD1: header, unchanged prefix, changed middle, unchanged suffix.
+export async function applyDelta(baseData, patchData) {
+  const base = new Uint8Array(baseData);
+  const patch = new Uint8Array(patchData);
+  if (patch.length < 100 || String.fromCharCode(...patch.subarray(0, 4)) !== "FAD1") throw Error("invalid_patch");
+  const view = new DataView(patch.buffer, patch.byteOffset, patch.byteLength);
+  const number = offset => {
+    const value = Number(view.getBigUint64(offset, false));
+    if (!Number.isSafeInteger(value)) throw Error("invalid_patch");
+    return value;
+  };
+  const baseSize = number(4), newSize = number(12), prefix = number(20), suffix = number(28);
+  const hex = bytes => [...bytes].map(byte => byte.toString(16).padStart(2, "0")).join("");
+  if (base.length !== baseSize || newSize > 150_000_000 || prefix + suffix > Math.min(baseSize, newSize) ||
+      patch.length !== 100 + newSize - prefix - suffix ||
+      await sha256(base) !== hex(patch.subarray(36, 68))) throw Error("invalid_patch");
+  const result = new Uint8Array(newSize);
+  result.set(base.subarray(0, prefix));
+  result.set(patch.subarray(100), prefix);
+  if (suffix) result.set(base.subarray(baseSize - suffix), newSize - suffix);
+  if (await sha256(result) !== hex(patch.subarray(68, 100))) throw Error("invalid_patch");
+  return result.buffer;
+}
+
 if (typeof document !== "undefined") {
   const form=document.getElementById("download-form"),field=document.getElementById("access-key");
   const button=document.getElementById("download-button"),status=document.getElementById("status"),manual=document.getElementById("manual-download");
   const note=document.getElementById("platform-note");
-  let currentUrl=null,prepared=null,busy=false;
+  const previousFile=document.getElementById("previous-file"),previousRow=document.getElementById("previous-file-row");
+  let currentUrl=null,prepared=null,busy=false,pcPatchAvailable=false,manifestPromise=null;
+  const loadManifest=()=>manifestPromise ||= fetch("./downloads.json",{cache:"no-store"})
+    .then(response=>{if(!response.ok)throw Error("manifest_failed");return response.json();})
+    .catch(error=>{manifestPromise=null;throw error;});
   const selected=()=>form.querySelector('[name="platform"]:checked').value;
   const initial=new URL(location.href).searchParams.get("platform") || (/Android/i.test(navigator.userAgent)?"android":"pc");
   if(["android","pc"].includes(initial))form.querySelector('[name="platform"][value="'+initial+'"]').checked=true;
   const descriptions={android:"Android: APK устанавливается поверх прежней версии. Данные сохраняются.",pc:"ПК: один файл FitnessAgent-PC.html открывается в Chrome или Edge. Установка и архиватор не нужны. Картинки внутри, данные хранятся в браузере. Для переноса используйте резервную копию. При обновлении заменяйте файл в той же папке и открывайте тем же браузером."};
   function reset(){
     if(busy)return;
-    prepared=null;manual.hidden=true;document.getElementById("fallback-download").hidden=true;status.textContent="";note.textContent=descriptions[selected()];
+    prepared=null;manual.hidden=true;document.getElementById("fallback-download").hidden=true;status.textContent="";note.textContent=descriptions[selected()];previousRow.hidden=selected()!=="pc" || !pcPatchAvailable;
     button.textContent=selected()==="android"?"Подготовить Android APK":"Подготовить версию для ПК";
     if(currentUrl){URL.revokeObjectURL(currentUrl);currentUrl=null;}
   }
-  form.querySelectorAll('[name="platform"]').forEach(r=>r.addEventListener("change",reset));reset();
+  form.querySelectorAll('[name="platform"]').forEach(r=>r.addEventListener("change",()=>{previousFile.value="";reset();}));
+  previousFile.addEventListener("change",reset);reset();
+  loadManifest().then(manifest=>{
+    pcPatchAvailable=Boolean(manifest.pc?.patch);
+    document.getElementById("release-version").textContent="Android "+(manifest.android?.versionName || "—")+" · ПК "+(manifest.pc?.versionName || "—");
+    reset();
+  }).catch(()=>{});
   manual.addEventListener("click",async event=>{
     if(!prepared)return;
     // A second explicit click keeps saving inside a browser user gesture.
@@ -56,21 +95,38 @@ if (typeof document !== "undefined") {
     status.textContent="Получаю сведения о версии…";
     try {
       if(!globalThis.crypto?.subtle)throw Error("secure_browser_required");
-      const manifestResponse=await fetch("./downloads.json",{cache:"no-store"});if(!manifestResponse.ok)throw Error("manifest_failed");
-      const manifest=await manifestResponse.json();const target=manifest[selected()];
+      const manifest=await loadManifest();const target=manifest[selected()];
       if(!target || !/^[A-Za-z0-9.-]+\.enc$/.test(target.url) || !/^[a-f0-9]{64}$/i.test(target.sha256))throw Error("invalid_manifest");
-      status.textContent="Загружаю защищённую версию "+target.versionName+" (около "+Math.ceil(target.sizeBytes/1000000)+" МБ)…";
-      const response=await fetch("./"+target.url,{cache:"no-store"});if(!response.ok)throw Error("download_failed");
-      status.textContent="Проверяю ключ и готовлю файл…";
-      const payload=await decryptPayload(await response.arrayBuffer(),password);
-      const hash=[...new Uint8Array(await globalThis.crypto.subtle.digest("SHA-256",payload))].map(b=>b.toString(16).padStart(2,"0")).join("");
+      let payload=null,compact=false;
+      const patch=target.patch,oldFile=selected()==="pc"?previousFile.files[0]:null;
+      if(oldFile && patch && /^[A-Za-z0-9.-]+\.enc$/.test(patch.url) && /^[a-f0-9]{64}$/i.test(patch.baseSha256) &&
+          /^[a-f0-9]{64}$/i.test(patch.sha256) && patch.sizeBytes>0 && patch.sizeBytes<target.sizeBytes) {
+        try {
+          status.textContent="Проверяю прежний файл…";
+          const base=await oldFile.arrayBuffer();
+          if(await sha256(base)===patch.baseSha256.toLowerCase()) {
+            status.textContent="Загружаю компактное обновление (около "+Math.ceil(patch.sizeBytes/1000000)+" МБ)…";
+            const response=await fetch("./"+patch.url,{cache:"no-store"});if(!response.ok)throw Error("download_failed");
+            const delta=await decryptPayload(await response.arrayBuffer(),password);
+            if(delta.byteLength!==patch.sizeBytes || await sha256(delta)!==patch.sha256.toLowerCase())throw Error("invalid_patch");
+            payload=await applyDelta(base,delta);compact=true;
+          }
+        } catch(error) {if(error.name==="OperationError")throw error;payload=null;}
+      }
+      if(!payload) {
+        status.textContent="Загружаю защищённую версию "+target.versionName+" (около "+Math.ceil(target.sizeBytes/1000000)+" МБ)…";
+        const response=await fetch("./"+target.url,{cache:"no-store"});if(!response.ok)throw Error("download_failed");
+        status.textContent="Проверяю ключ и готовлю файл…";
+        payload=await decryptPayload(await response.arrayBuffer(),password);
+      }
+      const hash=await sha256(payload);
       if(hash!==target.sha256.toLowerCase() || payload.byteLength!==target.sizeBytes)throw Error("integrity_failed");
       if(currentUrl)URL.revokeObjectURL(currentUrl);
       const blob=new Blob([payload],{type:target.mime});currentUrl=URL.createObjectURL(blob);
       prepared={blob,fileName:target.fileName};manual.href=currentUrl;manual.download=target.fileName;
       manual.textContent=selected()==="android" ? "Скачать Android APK" : "Скачать файл для ПК";
       const fallback=document.getElementById("fallback-download");fallback.href=currentUrl;fallback.download=target.fileName;
-      manual.hidden=false;field.value="";status.textContent="Файл готов. Нажмите кнопку Скачать ниже, чтобы сохранить его.";
+      manual.hidden=false;field.value="";status.textContent=(compact?"Компактное обновление готово. ":"Файл готов. ")+"Нажмите кнопку Скачать ниже, чтобы сохранить его.";
     } catch(error) {
       status.textContent=error.name==="OperationError" ? "Ключ не подошёл или файл повреждён. Проверьте ключ и повторите."
         : error.message==="secure_browser_required" ? "Откройте эту страницу в актуальном Chrome или Edge по адресу https://pavliksergeev378-eng.github.io/fitness-agent-downloads/."
