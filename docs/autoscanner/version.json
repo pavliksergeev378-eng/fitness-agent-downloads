@@ -1,0 +1,9 @@
+{
+    "versionCode":  3,
+    "versionName":  "0.3.0",
+    "publishedAt":  "2026-11-08",
+    "url":  "AutoScannerKia.apk",
+    "sha256":  "ECF85AD51E78E1FEBDE15FCCB18A9A9BE8469816333D3057F0B9BF0E77A1F6CA",
+    "sizeBytes":  43876,
+    "notes":  "Добавлена проверка обновлений при запуске и установка из приложения."
+}
