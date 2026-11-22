@@ -20,7 +20,7 @@
     #status { min-height: 3em; font-weight: 600; }
     .note { color: #46645a; font-size: .94rem; }
     a { color: #075a43; font-weight: 650; }
-    .platform-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;border:0;padding:0;margin:24px 0}.platform-options legend{margin-bottom:10px;font-weight:650}.platform-choice{display:flex;gap:10px;align-items:center;margin:0;padding:14px 10px;border:1px solid #8ca99b;border-radius:10px;cursor:pointer}.platform-choice:has(input:checked){background:#edf7f1;border-color:#146a51}.platform-choice input{width:20px;min-height:20px;margin:0}.platform-choice small{display:block;margin-top:4px;font-weight:400;font-size:12px}.save-file{display:block;text-align:center;padding:14px;border-radius:10px;background:#146a51;color:white;text-decoration:none}.save-file[hidden],#previous-file-row[hidden]{display:none}
+    .platform-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;border:0;padding:0;margin:24px 0}.platform-options legend{margin-bottom:10px;font-weight:650}.platform-choice{display:flex;gap:10px;align-items:center;margin:0;padding:14px 10px;border:1px solid #8ca99b;border-radius:10px;cursor:pointer}.platform-choice:has(input:checked){background:#edf7f1;border-color:#146a51}.platform-choice input{width:20px;min-height:20px;margin:0}.platform-choice small{display:block;margin-top:4px;font-weight:400;font-size:12px}.save-file{display:block;text-align:center;padding:14px;border-radius:10px;background:#146a51;color:white;text-decoration:none}.save-file[hidden],#previous-file-row[hidden],#access-key-row[hidden],#saved-key-row[hidden],#activate-updates[hidden],#activation-note[hidden]{display:none}.secondary-button{background:#e8f2ec;color:#146a51;border:1px solid #9ab9a8}
   </style>
   <script type="module" src="./app.js"></script>
 </head>
@@ -28,17 +28,18 @@
   <main>
     <h1>Скачать Фитнес-тренер</h1>
     <p id="release-version" class="note">Android и ПК</p>
-    <p>Введите ключ, который вам передал владелец приложения. Выберите Android или ПК. Для обеих версий действует один и тот же ключ; вход в GitHub и архиватор не нужны.</p>
+    <p>При первом скачивании введите ключ владельца. После успешной проверки он сохранится в этом браузере для следующих обновлений. Для Android дополнительно свяжите ключ с установленным приложением.</p>
     <form id="download-form">
       <fieldset class="platform-options"><legend>Для какого устройства скачать?</legend><label class="platform-choice"><input type="radio" name="platform" value="android" checked><span>Для Android<small>Приложение APK</small></span></label><label class="platform-choice"><input type="radio" name="platform" value="pc"><span>Для ПК<small>Файл для Chrome / Edge</small></span></label></fieldset>
       <label id="previous-file-row" for="previous-file" hidden>Уже есть версия для ПК? Выберите прежний файл для компактного обновления<input id="previous-file" type="file" accept=".html,text/html"><small class="note">Если компактное обновление недоступно, подготовим полный файл.</small></label>
-      <label for="access-key">Ключ доступа</label>
-      <input id="access-key" type="password" autocomplete="off" spellcheck="false" required>
+      <div id="access-key-row"><label for="access-key">Ключ доступа</label><input id="access-key" type="password" autocomplete="off" spellcheck="false" required></div>
+      <div id="saved-key-row" hidden><p class="note">Ключ сохранён в этом браузере.</p><button id="forget-key" class="secondary-button" type="button">Забыть ключ на этом устройстве</button></div>
       <button id="download-button" type="submit">Подготовить файл</button>
     </form>
     <p id="status" role="status" aria-live="polite"></p>
     <p><a id="manual-download" class="save-file" hidden>Скачать готовый файл</a></p><p><a id="fallback-download" hidden>Запасная ссылка для скачивания</a></p>
-    <p id="platform-note" class="note"></p><p class="note">Ключ используется только в вашем браузере и подходит для обеих версий. После подготовки нажмите отдельную кнопку скачивания. Сохранение файла может занять немного времени.</p>
+    <p id="activation-note" class="note" hidden>После установки APK вернитесь на эту страницу и нажмите кнопку ниже. Приложение получит ключ для обновлений без повторного ввода.</p><button id="activate-updates" type="button" hidden>Связать ключ с приложением Android</button>
+    <p id="platform-note" class="note"></p><p class="note">Ключ хранится только на этом устройстве и подходит для обеих версий. После подготовки нажмите отдельную кнопку скачивания. Сохранение файла может занять немного времени.</p>
     <noscript>Для загрузки включите JavaScript в браузере.</noscript>
   </main>
 </body>

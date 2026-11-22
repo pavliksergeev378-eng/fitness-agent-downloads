@@ -68,7 +68,12 @@ if (typeof document !== "undefined") {
   const button=document.getElementById("download-button"),status=document.getElementById("status"),manual=document.getElementById("manual-download");
   const note=document.getElementById("platform-note");
   const previousFile=document.getElementById("previous-file"),previousRow=document.getElementById("previous-file-row");
-  let currentUrl=null,prepared=null,busy=false,pcPatchAvailable=false,manifestPromise=null;
+  const accessRow=document.getElementById("access-key-row"),savedRow=document.getElementById("saved-key-row");
+  const activation=document.getElementById("activate-updates"),activationNote=document.getElementById("activation-note");
+  const keyStorage="fitness_download_access_key_v1";
+  let savedKey="";
+  try {savedKey=localStorage.getItem(keyStorage) || "";} catch (_) {}
+  let currentUrl=null,prepared=null,busy=false,pcPatchAvailable=false,androidLinkSupported=false,manifestPromise=null;
   const loadManifest=()=>manifestPromise ||= fetch("./downloads.json",{cache:"no-store"})
     .then(response=>{if(!response.ok)throw Error("manifest_failed");return response.json();})
     .catch(error=>{manifestPromise=null;throw error;});
@@ -76,16 +81,30 @@ if (typeof document !== "undefined") {
   const initial=new URL(location.href).searchParams.get("platform") || (/Android/i.test(navigator.userAgent)?"android":"pc");
   if(["android","pc"].includes(initial))form.querySelector('[name="platform"][value="'+initial+'"]').checked=true;
   const descriptions={android:"Android: APK устанавливается поверх прежней версии. Данные сохраняются.",pc:"ПК: один файл FitnessAgent-PC.html открывается в Chrome или Edge. Установка и архиватор не нужны. Картинки внутри, данные хранятся в браузере. Для переноса используйте резервную копию. При обновлении заменяйте файл в той же папке и открывайте тем же браузером."};
+  function refreshKeyUi(){
+    accessRow.hidden=Boolean(savedKey);savedRow.hidden=!savedKey;field.required=!savedKey;
+    activation.hidden=activationNote.hidden=!savedKey || selected()!=="android" || !androidLinkSupported;
+  }
   function reset(){
     if(busy)return;
     prepared=null;manual.hidden=true;document.getElementById("fallback-download").hidden=true;status.textContent="";note.textContent=descriptions[selected()];previousRow.hidden=selected()!=="pc" || !pcPatchAvailable;
     button.textContent=selected()==="android"?"Подготовить Android APK":"Подготовить версию для ПК";
+    refreshKeyUi();
     if(currentUrl){URL.revokeObjectURL(currentUrl);currentUrl=null;}
   }
+  document.getElementById("forget-key").addEventListener("click",()=>{
+    try {localStorage.removeItem(keyStorage);} catch (_) {}
+    savedKey="";field.value="";reset();field.focus();
+  });
+  activation.addEventListener("click",()=>{
+    if (!savedKey) return;
+    location.href="intent://activate/"+encodeURIComponent(savedKey)+"#Intent;scheme=fitnessagent;package=ru.fitnessagent.app;end";
+  });
   form.querySelectorAll('[name="platform"]').forEach(r=>r.addEventListener("change",()=>{previousFile.value="";reset();}));
   previousFile.addEventListener("change",reset);reset();
   loadManifest().then(manifest=>{
     pcPatchAvailable=Boolean(manifest.pc?.patch);
+    androidLinkSupported=Number(manifest.android?.versionCode)>=11;
     document.getElementById("release-version").textContent="Android "+(manifest.android?.versionName || "—")+" · ПК "+(manifest.pc?.versionName || "—");
     reset();
   }).catch(()=>{});
@@ -102,7 +121,7 @@ if (typeof document !== "undefined") {
     }
   });
   form.addEventListener("submit",async event=>{
-    event.preventDefault();const password=field.value.trim();if(!password)return;
+    event.preventDefault();const password=savedKey || field.value.trim();if(!password)return;
     busy=true;button.disabled=true;form.querySelectorAll('[name="platform"]').forEach(r=>r.disabled=true);
     manual.hidden=true;document.getElementById("fallback-download").hidden=true;prepared=null;
     status.textContent="Получаю сведения о версии…";
@@ -134,13 +153,16 @@ if (typeof document !== "undefined") {
       }
       const hash=await sha256(payload);
       if(hash!==target.sha256.toLowerCase() || payload.byteLength!==target.sizeBytes)throw Error("integrity_failed");
+      let remembered=false;
+      try {localStorage.setItem(keyStorage,password);savedKey=password;remembered=true;} catch (_) {}
       if(currentUrl)URL.revokeObjectURL(currentUrl);
       const blob=new Blob([payload],{type:target.mime});currentUrl=URL.createObjectURL(blob);
       prepared={blob,fileName:target.fileName};manual.href=currentUrl;manual.download=target.fileName;
       manual.textContent=selected()==="android" ? "Скачать Android APK" : "Скачать файл для ПК";
       const fallback=document.getElementById("fallback-download");fallback.href=currentUrl;fallback.download=target.fileName;
-      manual.hidden=false;field.value="";status.textContent=(compact?"Компактное обновление готово. ":"Файл готов. ")+"Нажмите кнопку Скачать ниже, чтобы сохранить его.";
+      manual.hidden=false;field.value="";refreshKeyUi();status.textContent=(compact?"Компактное обновление готово. ":"Файл готов. ")+(remembered?"Ключ сохранён для следующих загрузок. ":"Браузер не разрешил сохранить ключ. ")+"Нажмите кнопку Скачать ниже.";
     } catch(error) {
+      if(error.name==="OperationError" && savedKey){try{localStorage.removeItem(keyStorage);}catch(_){}savedKey="";refreshKeyUi();}
       status.textContent=error.name==="OperationError" ? "Ключ не подошёл или файл повреждён. Проверьте ключ и повторите."
         : error.message==="secure_browser_required" ? "Откройте эту страницу в актуальном Chrome или Edge по адресу https://pavliksergeev378-eng.github.io/fitness-agent-downloads/."
         : "Не удалось подготовить файл. Проверьте подключение и повторите.";
