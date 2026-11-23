@@ -1,35 +1,35 @@
 {
   "android": {
-    "versionCode": 12,
-    "versionName": "0.2.7",
-    "publishedAt": "2026-11-22",
-    "sha256": "6CCD6F6B040674DB52F7E9F48446793C245DC34DA87A2C3D738016FB2D239563",
-    "sizeBytes": 28695923,
+    "versionCode": 13,
+    "versionName": "0.2.8",
+    "publishedAt": "2026-11-23",
+    "sha256": "2B628CE59676D20B1792D5B7F9BFE41DDF3D55AFA1B21E1AB1A3B0E6674F3D9B",
+    "sizeBytes": 28680332,
     "url": "FitnessAgent.enc",
-    "fileName": "FitnessAgent-v0.2.7.apk",
+    "fileName": "FitnessAgent-v0.2.8.apk",
     "mime": "application/vnd.android.package-archive",
     "patch": {
-      "baseVersionCode": 11,
-      "baseSha256": "92D3A041056E840FA0D36936E94988B497E4FE1219A09F556F006993C8831541",
-      "sha256": "A4E724D42AE5F61DD62F324EFE005432C38641B53349DE55DDD98A7674BFACE2",
-      "sizeBytes": 81743,
+      "baseVersionCode": 12,
+      "baseSha256": "6CCD6F6B040674DB52F7E9F48446793C245DC34DA87A2C3D738016FB2D239563",
+      "sha256": "347BF1528CC8870ED2AFB4AC6869D33D58AABB9CC90E9FEB0C194C7FE026B675",
+      "sizeBytes": 1216509,
       "url": "FitnessAgent-Android.patch.enc"
     }
   },
   "pc": {
-    "versionCode": 4,
-    "versionName": "0.2.7",
-    "publishedAt": "2026-11-22",
-    "sha256": "EC4AFD16883F3A17320C7445ADC09FDA537E7B6EF8BE71191C0F3F6B65FBFE58",
-    "sizeBytes": 25267931,
+    "versionCode": 5,
+    "versionName": "0.2.8",
+    "publishedAt": "2026-11-23",
+    "sha256": "1E08FF882451F5C08663FADB3428947054F59C858699A2C06AB66F98016B31E1",
+    "sizeBytes": 25287965,
     "url": "FitnessAgent-PC.enc",
     "fileName": "FitnessAgent-PC.html",
     "mime": "text/html",
     "patch": {
-      "baseVersionCode": 3,
-      "baseSha256": "9C00994BF4D3F95F624E1070E45C8438C62A6C4290A961B5B0D652AE01F3E3FC",
-      "sha256": "201FFA79AD8FCFD371223351A3C2E50CE49E6079D5BD131CF262DAF33C108E26",
-      "sizeBytes": 19262,
+      "baseVersionCode": 4,
+      "baseSha256": "EC4AFD16883F3A17320C7445ADC09FDA537E7B6EF8BE71191C0F3F6B65FBFE58",
+      "sha256": "C1466AA022C3CBF5B14D660AD0408F8FF87D16BA17DCFBC1A87A33ADE6D65DD7",
+      "sizeBytes": 64491,
       "url": "FitnessAgent-PC.patch.enc"
     }
   }
